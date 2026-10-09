@@ -1,14 +1,8 @@
 (function () {
   'use strict';
 
-  /* ------------------------------------------------------------------
-     Settings — change contacts here.
-     ------------------------------------------------------------------ */
-  var CONFIG = {
-    whatsapp: '77089018088',          // number for orders and requests (digits only)
-    phone: '+77089018088',            // phone shown in the footer
-    phoneText: '+7 708 901 80 88'
-  };
+  // Contacts and the payments API address live in assets/js/config.js.
+  var CONFIG = window.WEGLOW_CONFIG;
 
   var PRODUCTS = {
     marine: {
@@ -26,6 +20,7 @@
   var doc = document.documentElement;
   var STORAGE_KEY = 'weglow-lang';
   var lang = 'ru';
+  var langListeners = [];
 
   /* ------------------------------------------------------------------
      Language
@@ -85,6 +80,7 @@
     });
     updateWaLinks();
     if (currentDetail) fillDetail(currentDetail);
+    langListeners.forEach(function (fn) { fn(lang); });
 
     if (persist) {
       try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
@@ -170,7 +166,8 @@
   var modals = {
     detail: document.getElementById('modal-detail'),
     order: document.getElementById('modal-order'),
-    partner: document.getElementById('modal-partner')
+    partner: document.getElementById('modal-partner'),
+    result: document.getElementById('modal-result')
   };
   var currentDetail = null;
   var currentOrder = 'marine';
@@ -214,9 +211,14 @@
       dlg.querySelector('[data-order-name]').textContent = PRODUCTS[currentOrder].name;
     }
     if (name !== 'detail') resetForm(dlg);
+    if (name === 'order' && W.payments) W.payments.reset();
     // Order opened from the details modal replaces it.
     if (name === 'order' && modals.detail.open) modals.detail.close();
     setMenu(false);
+    showModal(dlg);
+  }
+
+  function showModal(dlg) {
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
     lockScroll();
   }
@@ -289,6 +291,7 @@
       if (phone.replace(/\D/g, '').length < 9) { form.elements.phone.closest('.field').classList.add('is-invalid'); ok = false; }
       if (!agree) { form.elements.agree.closest('.check').classList.add('is-invalid'); ok = false; }
       if (!ok) { var bad = form.querySelector('.is-invalid input'); if (bad) bad.focus(); return; }
+      if (form.dataset.form === 'order' && W.payments && W.payments.submit({ name: name, phone: phone })) return;
 
       var text = form.dataset.form === 'order'
         ? fill(t('wa.order'), { product: PRODUCTS[currentOrder].name, qty: form.querySelector('output[name="qty"]').value, name: name, phone: phone })
@@ -318,6 +321,19 @@
   } else {
     reveals.forEach(function (el) { el.classList.add('is-in'); });
   }
+
+  /* ------------------------------------------------------------------
+     Shared with pay.js
+     ------------------------------------------------------------------ */
+  var W = window.Weglow = {
+    config: CONFIG,
+    t: t,
+    lang: function () { return lang; },
+    product: function () { return currentOrder; },
+    onLang: function (fn) { langListeners.push(fn); },
+    showModal: showModal,
+    payments: null
+  };
 
   applyLang(initialLang(), false);
 })();

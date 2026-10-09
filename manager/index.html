@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Счета для клиентов — WEGLOW</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+  <link rel="stylesheet" href="../assets/css/style.css?v=2">
+  <link rel="stylesheet" href="manager.css?v=2">
+</head>
+<body class="mgr">
+
+<header class="header is-scrolled">
+  <div class="container header__inner">
+    <a class="header__logo" href="../"><img src="../assets/img/logo-blue.png" alt="WEGLOW" width="214" height="71"></a>
+    <span class="mgr__title">Счета для клиентов</span>
+    <div class="header__actions" style="margin-left:auto">
+      <button type="button" class="btn btn--ghost btn--sm" data-logout hidden>Выйти</button>
+    </div>
+  </div>
+</header>
+
+<main class="container mgr__main">
+
+  <section class="mgr__card mgr__login" data-view="login" hidden>
+    <h1>Вход для менеджеров</h1>
+    <p class="muted">Введите пароль, который выдал администратор.</p>
+    <form data-login-form novalidate>
+      <div class="field">
+        <label for="key">Пароль</label>
+        <input id="key" type="password" autocomplete="current-password" required>
+        <span class="err">Неверный пароль</span>
+      </div>
+      <button class="btn btn--primary btn--block" type="submit">Войти</button>
+    </form>
+  </section>
+
+  <section class="mgr__card" data-view="off" hidden>
+    <h1>Онлайн-оплата ещё не подключена</h1>
+    <p class="muted">Укажите адрес платёжного API в <code>assets/js/config.js</code> (поле <code>payApi</code>).</p>
+  </section>
+
+  <div class="mgr__grid" data-view="app" hidden>
+    <section class="mgr__card">
+      <h2>Новый счёт</h2>
+      <form data-invoice-form novalidate>
+        <div class="field">
+          <label for="product">Товар</label>
+          <select id="product" name="product" required></select>
+        </div>
+        <div class="qty-row">
+          <span>Количество упаковок</span>
+          <div class="qty">
+            <button type="button" data-step="-1" aria-label="−1">−</button>
+            <output name="qty">1</output>
+            <button type="button" data-step="1" aria-label="+1">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="cname">Имя клиента</label>
+          <input id="cname" name="name" type="text" autocomplete="off" placeholder="Например, Мадина">
+        </div>
+        <div class="field">
+          <label for="cphone">Телефон клиента</label>
+          <input id="cphone" name="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="+998 90 123 45 67">
+          <span class="err">Нужен узбекский номер +998 XX XXX XX XX</span>
+        </div>
+        <div class="mgr__row">
+          <div class="field">
+            <label for="lang">Язык оплаты</label>
+            <select id="lang" name="lang"><option value="ru">Русский</option><option value="uz">O‘zbekcha</option></select>
+          </div>
+          <div class="field">
+            <label for="manager">Менеджер</label>
+            <input id="manager" name="manager" type="text" placeholder="Ваше имя">
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" name="sms" checked> <span>Отправить клиенту SMS со ссылкой на оплату</span></label>
+        <div class="mgr__total"><span>К оплате</span><b data-total>—</b></div>
+        <button class="btn btn--primary btn--block" type="submit" data-create>Выставить счёт</button>
+        <p class="form-error" data-form-error hidden></p>
+      </form>
+
+      <div class="mgr__result" data-result hidden>
+        <div class="mgr__result-head">
+          <div>
+            <span class="eyebrow eyebrow--blue">Счёт создан</span>
+            <h3 data-r-number></h3>
+            <p class="muted" data-r-summary></p>
+          </div>
+          <div class="mgr__qr" data-r-qr></div>
+        </div>
+        <div class="mgr__link"><input type="text" readonly data-r-link><button type="button" class="btn btn--ghost btn--sm" data-copy>Копировать</button></div>
+        <p class="mgr__sms" data-r-sms hidden></p>
+        <div class="mgr__share">
+          <a class="btn btn--sm mgr__wa" target="_blank" rel="noopener" data-r-wa>Отправить в WhatsApp</a>
+          <a class="btn btn--sm mgr__tg" target="_blank" rel="noopener" data-r-tg>Отправить в Telegram</a>
+          <button type="button" class="btn btn--ghost btn--sm" data-new>Новый счёт</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="mgr__card mgr__list">
+      <div class="mgr__list-head">
+        <h2>Последние счета и оплаты</h2>
+        <button type="button" class="btn btn--ghost btn--sm" data-refresh>Обновить</button>
+      </div>
+      <div class="mgr__filters">
+        <label><input type="radio" name="f" value="all" checked> Все</label>
+        <label><input type="radio" name="f" value="paid"> Оплачено</label>
+        <label><input type="radio" name="f" value="pending"> Ожидают</label>
+      </div>
+      <div class="mgr__table-wrap">
+        <table class="mgr__table">
+          <thead><tr><th>Счёт</th><th>Клиент</th><th>Товар</th><th>Сумма</th><th>Статус</th></tr></thead>
+          <tbody data-rows></tbody>
+        </table>
+        <p class="muted mgr__empty" data-empty hidden>Пока нет счетов.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="../assets/js/config.js?v=1"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="manager.js?v=2"></script>
+</body>
+</html>

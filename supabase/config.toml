@@ -1,0 +1,8 @@
+# Supabase project config — only the bits the CLI needs to deploy the payments Edge Function.
+# Set project_id to the target project ref before `supabase functions deploy pay`.
+project_id = "REPLACE_WITH_PROJECT_REF"
+
+# Called by the browser (weglow.uz), by Multicard's servers (callback) and by the manager page —
+# none of them carry a Supabase JWT. Each route does its own checks (signature, admin key).
+[functions.pay]
+verify_jwt = false

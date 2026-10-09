@@ -19,7 +19,7 @@
   <link rel="apple-touch-icon" href="assets/img/favicon.png">
   <link rel="preload" href="assets/fonts/SofiaPro-Light.woff" as="font" type="font/woff" crossorigin>
   <link rel="preload" href="assets/fonts/SofiaPro-SemiBold.woff" as="font" type="font/woff" crossorigin>
-  <link rel="stylesheet" href="assets/css/style.css?v=1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2">
   <script>
     // Apply the saved language before first paint to avoid a flash of Russian text.
     (function () {
@@ -190,6 +190,7 @@
           <span class="product__brand">WEGLOW</span>
           <h3 class="product__name">Marine Collagen <small data-i18n="product.sachets">(30 саше)</small></h3>
           <p class="product__desc" data-i18n="product.marine.desc">Чистый морской коллаген для кожи, волос, ногтей и суставов.</p>
+          <p class="product__price" data-price="marine" hidden></p>
           <div class="pills">
             <span class="pill" data-i18n="pill.collagen">5 г коллагена в порции</span>
             <span class="pill" data-i18n="pill.france">Французское качество</span>
@@ -211,6 +212,7 @@
           <span class="product__brand">WEGLOW</span>
           <h3 class="product__name">Marine Collagen + Vitamin&nbsp;C <small data-i18n="product.sachets">(30 саше)</small></h3>
           <p class="product__desc" data-i18n="product.vitc.desc">Морской коллаген с витамином C — для лучшего усвоения и сияния кожи.</p>
+          <p class="product__price" data-price="vitc" hidden></p>
           <div class="pills">
             <span class="pill" data-i18n="pill.collagen">5 г коллагена в порции</span>
             <span class="pill" data-i18n="pill.vitc">Витамин C</span>
@@ -501,16 +503,68 @@
           <button type="button" data-qty="1" aria-label="+1">+</button>
         </div>
       </div>
+      <fieldset class="paym" data-paym hidden>
+        <legend data-i18n="pay.method">Способ оплаты</legend>
+        <label class="paym__opt">
+          <input type="radio" name="method" value="online" checked>
+          <span class="paym__text"><b data-i18n="pay.online">Оплатить онлайн</b><small data-i18n="pay.online.sub">Карта Uzcard, Humo, Visa, Payme, Click, Uzum и другие</small></span>
+          <span class="paym__sum" data-pay-total></span>
+        </label>
+        <label class="paym__opt" data-paym-nasiya hidden>
+          <input type="radio" name="method" value="nasiya">
+          <span class="paym__text"><b data-i18n="pay.nasiya">В рассрочку</b><small data-i18n="pay.nasiya.sub">Uzum Nasiya — оплата частями, условия видны до подписания</small></span>
+        </label>
+        <label class="paym__opt">
+          <input type="radio" name="method" value="whatsapp">
+          <span class="paym__text"><b data-i18n="pay.wa">Через менеджера</b><small data-i18n="pay.wa.sub">Заявка в WhatsApp, оплату согласуем с менеджером</small></span>
+        </label>
+      </fieldset>
       <label class="check"><input type="checkbox" name="agree" checked> <span data-i18n="form.agree">Я согласен(на) с <a href="privacy.html" target="_blank" data-keep-lang>политикой конфиденциальности</a></span></label>
-      <button type="submit" class="btn btn--primary btn--block" data-i18n="form.submit">Отправить заявку</button>
-      <p class="form-note"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Z"/></svg><span data-i18n="form.note">После отправки заявки с вами свяжется наш менеджер</span></p>
+      <button type="submit" class="btn btn--primary btn--block" data-order-submit data-i18n="form.submit">Отправить заявку</button>
+      <p class="form-error" data-pay-error hidden></p>
+      <p class="form-note" data-order-note><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Z"/></svg><span data-i18n="form.note">После отправки заявки с вами свяжется наш менеджер</span></p>
     </form>
+    <div class="nasiya" data-nasiya hidden>
+      <span class="eyebrow eyebrow--blue">Uzum Nasiya</span>
+      <h3 data-i18n="nasiya.title">Оформление рассрочки</h3>
+      <div class="nasiya__step" data-step="loading"><div class="spinner" aria-hidden="true"></div><p data-i18n="nasiya.loading">Проверяем данные в Uzum Nasiya…</p></div>
+      <div class="nasiya__step" data-step="register" hidden>
+        <p data-i18n="nasiya.register">Чтобы оформить рассрочку, пройдите короткую регистрацию в Uzum Nasiya: понадобятся паспорт или ID-карта и банковская карта. После проверки вернитесь сюда.</p>
+        <a class="btn btn--primary btn--block" data-nasiya-webview target="_blank" rel="noopener" data-i18n="nasiya.register.btn">Пройти регистрацию</a>
+        <button type="button" class="btn btn--ghost btn--block" data-nasiya-recheck data-i18n="nasiya.recheck">Я зарегистрировался — проверить</button>
+      </div>
+      <div class="nasiya__step" data-step="denied" hidden>
+        <p data-i18n="nasiya.denied">К сожалению, Uzum Nasiya не может оформить рассрочку на этот номер. Выберите другой способ оплаты.</p>
+      </div>
+      <div class="nasiya__step" data-step="tariffs" hidden>
+        <p data-i18n="nasiya.choose">Выберите срок рассрочки:</p>
+        <div class="tariffs" data-tariffs></div>
+        <button type="button" class="btn btn--primary btn--block" data-nasiya-sign data-i18n="nasiya.sign">Подписать договор</button>
+        <p class="form-note" data-i18n="nasiya.sign.note">Откроется страница Uzum Nasiya — подтвердите договор кодом из SMS.</p>
+      </div>
+      <p class="form-error" data-nasiya-error hidden></p>
+      <button type="button" class="btn btn--ghost btn--block nasiya__back" data-nasiya-back data-i18n="nasiya.back">Выбрать другой способ оплаты</button>
+    </div>
     <div class="form-success" role="status">
       <div class="form-success__icon"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <h3 data-i18n="success.title">Почти готово!</h3>
       <p data-i18n="success.text">Мы открыли WhatsApp с вашей заявкой — нажмите «Отправить», и менеджер свяжется с вами.</p>
       <p style="margin-top:14px"><a href="#" data-success-link target="_blank" rel="noopener" data-i18n="success.link">WhatsApp не открылся? Нажмите здесь</a></p>
     </div>
+  </div>
+</dialog>
+
+<!-- ===================== Modal: payment result ===================== -->
+<dialog class="modal" id="modal-result" aria-live="polite">
+  <button class="modal__close" type="button" data-close aria-label="Закрыть" data-i18n-attr="aria-label:modal.close"><svg viewBox="0 0 20 20" fill="none"><path d="m4 4 12 12M16 4 4 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  <div class="modal__scroll form-modal result" data-result="loading">
+    <div class="result__icon result__icon--wait"><div class="spinner" aria-hidden="true"></div></div>
+    <div class="result__icon result__icon--ok"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="result__icon result__icon--fail"><svg viewBox="0 0 24 24" fill="none"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+    <h3 data-result-title></h3>
+    <p data-result-text></p>
+    <p class="result__links"><a data-result-receipt target="_blank" rel="noopener" hidden data-i18n="result.receipt">Открыть чек</a></p>
+    <button type="button" class="btn btn--ghost" data-result-recheck hidden data-i18n="result.recheck">Проверить ещё раз</button>
   </div>
 </dialog>
 
@@ -549,7 +603,9 @@
   </div>
 </dialog>
 
-<script src="assets/js/i18n.js?v=1"></script>
-<script src="assets/js/main.js?v=1"></script>
+<script src="assets/js/config.js?v=1"></script>
+<script src="assets/js/i18n.js?v=2"></script>
+<script src="assets/js/main.js?v=2"></script>
+<script src="assets/js/pay.js?v=1"></script>
 </body>
 </html>
