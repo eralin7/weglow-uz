@@ -3,6 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    // Until GitHub enforces HTTPS for the domain: send http:// visitors to https://weglow.uz.
+    if (location.protocol === 'http:' && /(^|\.)weglow\.uz$/.test(location.hostname)) {
+      location.replace('https://weglow.uz' + location.pathname + location.search + location.hash);
+    }
+  </script>
   <title data-i18n="meta.title">Морской коллаген WEGLOW — секрет вашей естественной красоты</title>
   <meta name="description" data-i18n-attr="content:meta.description" content="Морской коллаген WEGLOW с витамином C: французское качество, 5 г чистого коллагена в порции. Для кожи, волос, ногтей и суставов.">
   <meta name="theme-color" content="#ffffff">
