@@ -1,6 +1,3 @@
-import { crypto } from 'jsr:@std/crypto@1';
-import { encodeHex } from 'jsr:@std/encoding@1/hex';
-
 export const env = (key: string, fallback = ''): string => Deno.env.get(key) ?? fallback;
 
 const allowedOrigins = env('CORS_ORIGINS', 'https://weglow.uz,https://www.weglow.uz')
@@ -24,6 +21,10 @@ export function json(req: Request, data: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders(req), 'Content-Type': 'application/json; charset=utf-8' },
   });
+}
+
+export function redirect(url: string): Response {
+  return new Response(null, { status: 302, headers: { Location: url, 'Cache-Control': 'no-store' } });
 }
 
 export class HttpError extends Error {
@@ -55,11 +56,6 @@ export function parseQty(raw: unknown): number {
   return n;
 }
 
-export async function md5(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest('MD5', new TextEncoder().encode(text));
-  return encodeHex(buf);
-}
-
 export function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -69,4 +65,11 @@ export function safeEqual(a: string, b: string): boolean {
 
 export function formatSum(uzs: number | string): string {
   return Math.round(Number(uzs)).toLocaleString('ru-RU').replace(/ /g, ' ') + ' сум';
+}
+
+/** Short unguessable token for payment links (8 chars, ~40 bits). */
+export function token(): string {
+  const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
 }

@@ -1,0 +1,31 @@
+# weglow.uz payment server. Lives in /opt/weglow on the Tashkent VPS:
+#   /opt/weglow/server   — app code (rsync from the repo)
+#   /opt/weglow/deploy   — this file, Caddyfile, .env
+#   /opt/weglow/data     — SQLite database (payments, products) + daily backups
+services:
+  pay:
+    build: ../server
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_PATH: /data/weglow.db
+      PORT: "8080"
+    volumes:
+      - ../data:/data
+
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - pay
+
+volumes:
+  caddy_data:
+  caddy_config:

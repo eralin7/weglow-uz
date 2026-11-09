@@ -13,7 +13,7 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" href="../assets/img/favicon.png">
   <link rel="stylesheet" href="../assets/css/style.css?v=2">
-  <link rel="stylesheet" href="manager.css?v=2">
+  <link rel="stylesheet" href="manager.css?v=3">
 </head>
 <body class="mgr">
 
@@ -70,7 +70,6 @@
         <div class="field">
           <label for="cphone">Телефон клиента</label>
           <input id="cphone" name="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="+998 90 123 45 67">
-          <span class="err">Нужен узбекский номер +998 XX XXX XX XX</span>
         </div>
         <div class="mgr__row">
           <div class="field">
@@ -82,7 +81,6 @@
             <input id="manager" name="manager" type="text" placeholder="Ваше имя">
           </div>
         </div>
-        <label class="check"><input type="checkbox" name="sms" checked> <span>Отправить клиенту SMS со ссылкой на оплату</span></label>
         <div class="mgr__total"><span>К оплате</span><b data-total>—</b></div>
         <button class="btn btn--primary btn--block" type="submit" data-create>Выставить счёт</button>
         <p class="form-error" data-form-error hidden></p>
@@ -98,13 +96,27 @@
           <div class="mgr__qr" data-r-qr></div>
         </div>
         <div class="mgr__link"><input type="text" readonly data-r-link><button type="button" class="btn btn--ghost btn--sm" data-copy>Копировать</button></div>
-        <p class="mgr__sms" data-r-sms hidden></p>
+        <p class="muted mgr__hint">Ссылка действует, пока счёт не оплачен или не отменён. Оплата картой Uzcard, Humo, Visa или Mastercard через Uzum Bank.</p>
         <div class="mgr__share">
           <a class="btn btn--sm mgr__wa" target="_blank" rel="noopener" data-r-wa>Отправить в WhatsApp</a>
           <a class="btn btn--sm mgr__tg" target="_blank" rel="noopener" data-r-tg>Отправить в Telegram</a>
           <button type="button" class="btn btn--ghost btn--sm" data-new>Новый счёт</button>
         </div>
       </div>
+    </section>
+
+    <section class="mgr__card mgr__products">
+      <div class="mgr__list-head">
+        <h2>Товары и цены</h2>
+        <span class="muted mgr__note">ИКПУ и код упаковки — с tasnif.soliq.uz (уточните у бухгалтера)</span>
+      </div>
+      <div class="mgr__table-wrap">
+        <table class="mgr__table mgr__ptable">
+          <thead><tr><th>Товар</th><th>Цена, сум</th><th>ИКПУ</th><th>Код упаковки</th><th>НДС %</th><th>Nasiya: категория</th><th>На сайте</th><th></th></tr></thead>
+          <tbody data-products></tbody>
+        </table>
+      </div>
+      <p class="form-error" data-products-error hidden></p>
     </section>
 
     <section class="mgr__card mgr__list">
@@ -128,8 +140,8 @@
   </div>
 </main>
 
-<script src="../assets/js/config.js?v=1"></script>
+<script src="../assets/js/config.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="manager.js?v=2"></script>
+<script src="manager.js?v=3"></script>
 </body>
 </html>

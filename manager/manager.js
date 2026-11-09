@@ -16,22 +16,24 @@
     set: function (k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
   };
 
-  var STATUS = { new: 'Новый', pending: 'Ожидает оплаты', paid: 'Оплачен', cancelled: 'Отменён', failed: 'Ошибка' };
+  var STATUS = { new: 'Ждёт оплаты', pending: 'Ожидает оплаты', paid: 'Оплачен', cancelled: 'Отменён', failed: 'Ошибка', refunded: 'Возврат' };
   var SHORT = { marine: 'Marine Collagen', vitc: 'Collagen + Vit C' };
-  var PS = { uzcard: 'Uzcard', humo: 'Humo', visa: 'Visa', mastercard: 'Mastercard', payme: 'Payme', click: 'Click', uzum: 'Uzum' };
   var ERRORS = {
     UNAUTHORIZED: 'Неверный пароль — войдите заново.',
-    BAD_PHONE: 'Для SMS нужен узбекский номер +998 XX XXX XX XX.',
-    PRODUCT_NOT_FOR_SALE: 'У товара не указана цена. Заполните её в таблице uz_products.',
-    PRODUCT_MXIK_MISSING: 'У товара не указан ИКПУ или код упаковки (uz_products).',
-    MULTICARD_NOT_CONFIGURED: 'Не заданы ключи Multicard на сервере.'
+    PRODUCT_NOT_FOR_SALE: 'У товара не указана цена — заполните её в разделе «Товары и цены».',
+    PRODUCT_MXIK_MISSING: 'У товара не указан ИКПУ или код упаковки — заполните в разделе «Товары и цены».',
+    UZUM_NOT_CONFIGURED: 'Не заданы ключи Uzum Bank на сервере.',
+    BAD_PRICE: 'Цена — целое число сум, от 1 000.',
+    BAD_MXIK: 'ИКПУ — ровно 17 цифр.',
+    BAD_PACKAGE_CODE: 'Код упаковки — до 20 цифр.',
+    BAD_VAT: 'НДС — число от 0 до 99.',
+    BAD_NASIYA_CATEGORY: 'Категория Nasiya — целое число (выдаёт менеджер Uzum Nasiya).'
   };
 
   function show(view) { $$('[data-view]').forEach(function (el) { el.hidden = el.dataset.view !== view; }); $('[data-logout]').hidden = view !== 'app'; }
   function sum(n) { return Math.round(n).toLocaleString('ru-RU').replace(/ /g, ' ') + ' сум'; }
   function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
   function digits(v) { return String(v || '').replace(/\D/g, ''); }
-  function uzPhone(v) { var d = digits(v); if (d.length === 9) d = '998' + d; return /^998\d{9}$/.test(d) ? d : null; }
   function fmtPhone(d) { return d && d.length === 12 ? '+' + d.slice(0, 3) + ' ' + d.slice(3, 5) + ' ' + d.slice(5, 8) + ' ' + d.slice(8, 10) + ' ' + d.slice(10) : (d ? '+' + d : '—'); }
   function fmtDate(s) { var d = new Date(s); return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); }
   function product(id) { return catalog.filter(function (p) { return p.id === id; })[0]; }
@@ -82,36 +84,29 @@
     });
   });
   form.elements.product.addEventListener('change', updateTotal);
-  form.elements.phone.addEventListener('input', function () { this.closest('.field').classList.remove('is-invalid'); });
   form.elements.manager.value = store.get(MANAGER_STORE);
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var err = $('[data-form-error]');
     err.hidden = true;
-    var sms = form.elements.sms.checked;
-    var phone = uzPhone(form.elements.phone.value);
-    if (sms && !phone) { form.elements.phone.closest('.field').classList.add('is-invalid'); return; }
     store.set(MANAGER_STORE, form.elements.manager.value.trim());
     var btn = $('[data-create]');
     btn.disabled = true;
     api('POST', '/manager/invoice', {
       product_id: form.elements.product.value, qty: +qtyOut.value, name: form.elements.name.value,
-      phone: form.elements.phone.value, lang: form.elements.lang.value, send_sms: sms, manager: form.elements.manager.value
+      phone: form.elements.phone.value, lang: form.elements.lang.value, manager: form.elements.manager.value
     })
-      .then(function (res) { btn.disabled = false; showResult(res.payment, res.text, sms); loadPayments(); })
+      .then(function (res) { btn.disabled = false; showResult(res.payment, res.text); loadPayments(); })
       .catch(function (e2) { btn.disabled = false; err.hidden = false; err.textContent = ERRORS[e2.code] || ('Ошибка: ' + (e2.code || e2.message)); });
   });
 
-  function showResult(p, text, sms) {
-    var link = p.short_link || p.checkout_url;
+  function showResult(p, text) {
+    var link = p.link;
     var prod = product(p.product_id);
     $('[data-r-number]').textContent = 'WG-' + p.number;
     $('[data-r-summary]').textContent = (prod ? prod.name_ru : p.product_id) + ' × ' + p.qty + ' — ' + sum(p.amount_uzs);
     $('[data-r-link]').value = link;
-    var smsEl = $('[data-r-sms]');
-    smsEl.hidden = !sms;
-    smsEl.textContent = 'SMS со ссылкой отправлено на ' + fmtPhone(p.customer_phone);
     var waTarget = p.customer_phone ? digits(p.customer_phone) : '';
     $('[data-r-wa]').href = 'https://wa.me/' + waTarget + '?text=' + encodeURIComponent(text);
     $('[data-r-tg]').href = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text.replace(link, '').trim());
@@ -154,18 +149,17 @@
     $('[data-empty]').hidden = rows.length > 0;
     $('[data-rows]').innerHTML = rows.map(function (p) {
       var prod = product(p.product_id);
-      var how = p.provider === 'nasiya' ? 'Uzum Nasiya' : (PS[p.ps] || p.ps || (p.source === 'manager' ? 'Счёт менеджера' : 'Сайт'));
-      var link = p.short_link || p.checkout_url;
+      var how = p.provider === 'nasiya' ? 'Uzum Nasiya' : (p.source === 'manager' ? 'Счёт, карта' : 'Сайт, карта');
+      var link = p.link;
       return '<tr>' +
         '<td class="num">WG-' + p.number + '<small>' + esc(fmtDate(p.created_at)) + '</small><small>' + esc(p.source === 'manager' ? (p.created_by || 'менеджер') : 'сайт') + '</small></td>' +
         '<td>' + esc(p.customer_name || '—') + '<small>' + esc(fmtPhone(p.customer_phone)) + '</small></td>' +
         '<td class="prod">' + esc(SHORT[p.product_id] || (prod ? prod.name_ru : p.product_id)) + ' × ' + p.qty + '</td>' +
         '<td class="sum">' + sum(p.amount_uzs) + '<small>' + esc(how) + '</small></td>' +
         '<td><span class="badge badge--' + p.status + '">' + STATUS[p.status] + '</span>' +
-          (p.receipt_url ? '<small><a href="' + esc(p.receipt_url) + '" target="_blank" rel="noopener">чек</a></small>' : '') +
           '<div class="mgr__actions">' +
-          (link && p.status === 'pending' && p.provider === 'multicard' ? '<button type="button" data-act="copy" data-link="' + esc(link) + '">Ссылка</button>' : '') +
-          (p.status === 'pending' ? '<button type="button" data-act="cancel" data-id="' + p.id + '">Отменить</button>' : '') +
+          (link && (p.status === 'pending' || p.status === 'new') ? '<button type="button" data-act="copy" data-link="' + esc(link) + '">Ссылка</button>' : '') +
+          (p.status === 'pending' || p.status === 'new' ? '<button type="button" data-act="cancel" data-id="' + p.id + '">Отменить</button>' : '') +
         '</div></td>' +
       '</tr>';
     }).join('');
@@ -190,19 +184,70 @@
     }
   });
 
+  /* ------------------------------------------------------------ products */
+
+  function renderProductSelect() {
+    var current = form.elements.product.value;
+    form.elements.product.innerHTML = catalog.filter(function (p) { return p.active; }).map(function (p) {
+      return '<option value="' + esc(p.id) + '"' + (p.price_uzs ? '' : ' disabled') + '>' + esc(p.name_ru) + (p.price_uzs ? ' — ' + sum(p.price_uzs) : ' — нет цены') + '</option>';
+    }).join('');
+    if (current) form.elements.product.value = current;
+    updateTotal();
+  }
+
+  function cell(name, value, attrs) {
+    return '<td><input name="' + name + '" value="' + esc(value == null ? '' : value) + '" ' + (attrs || '') + '></td>';
+  }
+
+  function renderProducts() {
+    $('[data-products]').innerHTML = catalog.map(function (p) {
+      return '<tr data-id="' + esc(p.id) + '">' +
+        '<td class="pname">' + esc(SHORT[p.id] || p.name_ru) + '</td>' +
+        cell('price_uzs', p.price_uzs, 'inputmode="numeric" placeholder="350000"') +
+        cell('mxik', p.mxik, 'inputmode="numeric" maxlength="17" placeholder="17 цифр"') +
+        cell('package_code', p.package_code, 'inputmode="numeric" maxlength="20"') +
+        cell('vat_percent', p.vat_percent, 'inputmode="numeric" style="min-width:60px"') +
+        cell('nasiya_category', p.nasiya_category, 'inputmode="numeric"') +
+        '<td><input type="checkbox" name="active"' + (p.active ? ' checked' : '') + '></td>' +
+        '<td><button type="button" class="btn btn--blue btn--sm" data-save>Сохранить</button></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  $('[data-products]').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-save]');
+    if (!btn) return;
+    var row = btn.closest('tr');
+    var val = function (n) { return row.querySelector('[name="' + n + '"]').value.trim(); };
+    var err = $('[data-products-error]');
+    err.hidden = true;
+    btn.disabled = true;
+    api('POST', '/manager/products', {
+      id: row.dataset.id, price_uzs: digits(val('price_uzs')) || null, mxik: val('mxik'), package_code: val('package_code'),
+      vat_percent: val('vat_percent') || 0, nasiya_category: digits(val('nasiya_category')) || null,
+      active: row.querySelector('[name="active"]').checked
+    })
+      .then(function (res) {
+        btn.disabled = false;
+        catalog = catalog.map(function (p) { return p.id === res.product.id ? res.product : p; });
+        renderProducts();
+        renderProductSelect();
+        var saved = $('[data-products] tr[data-id="' + res.product.id + '"] td:last-child');
+        saved.insertAdjacentHTML('beforeend', ' <span class="saved">Сохранено</span>');
+      })
+      .catch(function (e2) { btn.disabled = false; err.hidden = false; err.textContent = ERRORS[e2.code] || ('Ошибка: ' + (e2.code || e2.message)); });
+  });
+
+  function loadProducts() {
+    return api('GET', '/manager/products').then(function (res) { catalog = res.products; renderProducts(); renderProductSelect(); });
+  }
+
   /* ------------------------------------------------------------ start */
 
   function startApp(initial) {
     show('app');
-    fetch(API + '/catalog').then(function (r) { return r.json(); }).then(function (res) {
-      catalog = res.products;
-      form.elements.product.innerHTML = catalog.map(function (p) {
-        return '<option value="' + esc(p.id) + '"' + (p.price_uzs ? '' : ' disabled') + '>' + esc(p.name_ru) + (p.price_uzs ? ' — ' + sum(p.price_uzs) : ' — нет цены') + '</option>';
-      }).join('');
-      updateTotal();
-      payments = initial || [];
-      renderPayments();
-    });
+    payments = initial || [];
+    loadProducts().then(renderPayments);
     setInterval(function () { if (key && !document.hidden) loadPayments().catch(function () {}); }, 30000);
   }
 

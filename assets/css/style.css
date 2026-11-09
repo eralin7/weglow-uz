@@ -490,7 +490,8 @@ dialog.modal[open]::backdrop { animation: fade .35s ease; }
 }
 .paym__opt:has(input:checked) { border-color: var(--blue); background: var(--blue-50); }
 .paym__opt input { width: 20px; height: 20px; margin: 0; accent-color: var(--blue); }
-.paym__text b { display: block; font-size: 16px; font-weight: 500; }
+.paym__text b { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 500; }
+.paym__brand { width: 18px; height: 18px; border-radius: 5px; }
 .paym__text small { display: block; font-size: 13.5px; color: var(--ink-3); line-height: 1.35; margin-top: 2px; }
 .paym__sum { font-size: 16px; font-weight: 500; white-space: nowrap; }
 .form-error { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--coral-50); color: var(--coral-deep); font-size: 14.5px; line-height: 1.4; }

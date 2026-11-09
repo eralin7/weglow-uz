@@ -1,5 +1,5 @@
 /*
- * Online payments on weglow.uz: Multicard / Rahmat checkout and Uzum Nasiya installments.
+ * Online payments on weglow.uz: Uzum Checkout (cards via Uzum Bank) and Uzum Nasiya installments.
  * Everything here stays dormant until CONFIG.payApi is set in main.js — the order form then keeps
  * working through WhatsApp only.
  */
@@ -227,7 +227,7 @@
     api('GET', '/status?id=' + encodeURIComponent(id))
       .then(function (s) {
         if (s.status === 'paid') return showResult('ok', 'result.paid.title', 'result.paid.text', s.receipt_url);
-        if (s.status === 'cancelled' || s.status === 'failed') return showResult('fail', 'result.fail.title', 'result.fail.text');
+        if (s.status === 'cancelled' || s.status === 'failed' || s.status === 'refunded') return showResult('fail', 'result.fail.title', 'result.fail.text');
         if (attempt < 6) { showResult('loading', 'result.wait.title', 'result.wait.text'); return setTimeout(function () { checkPaid(id, attempt + 1); }, 2500); }
         showResult('pending', 'result.pending.title', 'result.pending.text');
       })

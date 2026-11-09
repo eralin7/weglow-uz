@@ -25,7 +25,7 @@
   <link rel="apple-touch-icon" href="assets/img/favicon.png">
   <link rel="preload" href="assets/fonts/SofiaPro-Light.woff" as="font" type="font/woff" crossorigin>
   <link rel="preload" href="assets/fonts/SofiaPro-SemiBold.woff" as="font" type="font/woff" crossorigin>
-  <link rel="stylesheet" href="assets/css/style.css?v=2">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
   <script>
     // Apply the saved language before first paint to avoid a flash of Russian text.
     (function () {
@@ -513,7 +513,7 @@
         <legend data-i18n="pay.method">Способ оплаты</legend>
         <label class="paym__opt">
           <input type="radio" name="method" value="online" checked>
-          <span class="paym__text"><b data-i18n="pay.online">Оплатить онлайн</b><small data-i18n="pay.online.sub">Карта Uzcard, Humo, Visa, Payme, Click, Uzum и другие</small></span>
+          <span class="paym__text"><b><span data-i18n="pay.online">Оплатить онлайн</span> <img class="paym__brand" src="assets/img/uzum-bank-icon.svg" alt="Uzum Bank" width="18" height="18"></b><small data-i18n="pay.online.sub">Карты Uzcard, Humo, Visa, Mastercard — через Uzum Bank</small></span>
           <span class="paym__sum" data-pay-total></span>
         </label>
         <label class="paym__opt" data-paym-nasiya hidden>
@@ -609,9 +609,9 @@
   </div>
 </dialog>
 
-<script src="assets/js/config.js?v=1"></script>
-<script src="assets/js/i18n.js?v=2"></script>
+<script src="assets/js/config.js?v=2"></script>
+<script src="assets/js/i18n.js?v=3"></script>
 <script src="assets/js/main.js?v=2"></script>
-<script src="assets/js/pay.js?v=1"></script>
+<script src="assets/js/pay.js?v=2"></script>
 </body>
 </html>

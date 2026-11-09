@@ -22,7 +22,17 @@
 .mgr__qr svg, .mgr__qr img { width: 128px; height: 128px; display: block; }
 .mgr__link { display: flex; gap: 8px; margin: 20px 0 10px; }
 .mgr__link input { flex: 1; min-width: 0; height: 46px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line); font: inherit; font-size: 14px; color: var(--ink-2); }
-.mgr__sms { font-size: 14px; color: #1FAF57; margin-bottom: 10px; }
+.mgr__hint { font-size: 13.5px; margin-bottom: 10px; }
+.mgr__products, .mgr__list { grid-column: 1 / -1; }
+.mgr__list { grid-column: 2; grid-row: 1; }
+.mgr__products { grid-row: 2; }
+.mgr__note { font-size: 13px; }
+.mgr__ptable input { width: 100%; min-width: 90px; height: 40px; padding: 0 10px; border-radius: 10px; border: 1.5px solid var(--line); font: inherit; font-size: 14px; }
+.mgr__ptable input:focus { outline: none; border-color: var(--blue); }
+.mgr__ptable input[type="checkbox"] { width: 20px; height: 20px; min-width: 0; accent-color: var(--blue); }
+.mgr__ptable td { vertical-align: middle; }
+.mgr__ptable .pname { font-weight: 500; white-space: nowrap; }
+.mgr__ptable .saved { color: #1A8F48; font-size: 13px; white-space: nowrap; }
 .mgr__share { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .mgr__wa { --bg: #25D366; }
 .mgr__tg { --bg: #2AABEE; }
@@ -47,9 +57,11 @@
 .badge--pending, .badge--new { background: var(--blue-50); color: var(--blue-deep); }
 .badge--cancelled { background: var(--mist); color: var(--ink-3); }
 .badge--failed { background: var(--coral-50); color: var(--coral-deep); }
+.badge--refunded { background: #FFF6E5; color: #A76B00; }
 
 @media (max-width: 960px) {
   .mgr__grid { grid-template-columns: 1fr; }
+  .mgr__list, .mgr__products { grid-column: 1; grid-row: auto; }
 }
 @media (max-width: 560px) {
   .mgr__card { padding: 22px 18px; }

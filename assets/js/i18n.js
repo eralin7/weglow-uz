@@ -210,7 +210,7 @@ window.I18N = {
     /* payments */
     'pay.method': 'To‘lov usuli',
     'pay.online': 'Onlayn to‘lash',
-    'pay.online.sub': 'Uzcard, Humo, Visa kartalari, Payme, Click, Uzum va boshqalar',
+    'pay.online.sub': 'Uzcard, Humo, Visa, Mastercard kartalari — Uzum Bank orqali',
     'pay.nasiya': 'Muddatli to‘lov',
     'pay.nasiya.sub': 'Uzum Nasiya — bo‘lib to‘lash, shartlar imzolashdan oldin ko‘rinadi',
     'pay.wa': 'Menejer orqali',

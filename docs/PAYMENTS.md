@@ -1,8 +1,6 @@
 # Онлайн-оплата weglow.uz
 
-Две системы:
-
-- **Rahmat (АО «Multicard Payment»)** — оплата картами Uzcard, Humo, Visa, Mastercard и через Payme, Click, Uzum, Alif, Paynet, Oson, HUMO Pay, СБП и др. Деньги приходят на расчётный счёт в Капиталбанке. Фискальный чек формируется автоматически.
+- **Uzum Checkout (Uzum Bank)** — оплата картами Uzcard, Humo, Visa, Mastercard. Чек фискализирует Uzum (автофискализация). Деньги — на расчётный счёт.
 - **Uzum Nasiya** — рассрочка. Клиент платит частями, магазин получает всю сумму.
 
 Пока в `assets/js/config.js` пустое поле `payApi`, сайт работает как раньше: заказ уходит в WhatsApp.
@@ -10,58 +8,60 @@
 ## Как устроено
 
 ```
-weglow.uz (GitHub Pages)  ──►  Supabase Edge Function `pay`  ──►  Multicard API / Uzum Nasiya API
-                                   │  таблицы uz_products, uz_payments
-                                   └► уведомление об оплате в Telegram
+weglow.uz (GitHub Pages) ──► pay.weglow.uz — сервер в Ташкенте (server/, Docker + Caddy)
+                                  │  SQLite: товары, платежи (данные клиентов хранятся в Узбекистане)
+                                  ├► Uzum Checkout API (с постоянного IP сервера)
+                                  ├► Uzum Nasiya Partner API
+                                  └► уведомления об оплате в Telegram
 ```
 
-- Клиент на сайте выбирает: «Оплатить онлайн», «В рассрочку» или «Через менеджера» (WhatsApp).
-- Менеджер выставляет счёт на странице **https://weglow.uz/manager/** (вход по паролю `ADMIN_KEY`): клиенту приходит SMS со ссылкой, можно отправить ссылку в WhatsApp/Telegram или показать QR-код.
-- Номера заказов вида **WG-1001** — по ним счёт виден в кабинете Rahmat.
+- На сайте клиент выбирает «Оплатить онлайн», «В рассрочку» или «Через менеджера» (WhatsApp).
+- Менеджер на **https://weglow.uz/manager/** выставляет счёт и получает постоянную ссылку вида
+  `https://pay.weglow.uz/p/1001-k3f9x2ab`. Её можно отправить в WhatsApp/Telegram или показать QR-кодом.
+  По ссылке каждый раз открывается свежая страница оплаты Uzum (их сессия живёт 30 минут).
+- Там же, в разделе «Товары и цены», задаются цена, ИКПУ, код упаковки, НДС и категория Nasiya.
+- Номер заказа **WG-1001** виден в кабинете Uzum.
+- Callback от Uzum не подписан, поэтому сервер всегда перепроверяет статус и сумму через `getOrderStatus`.
 
-## Шаги подключения
+## Данные для Uzum Bank
 
-1. **Заявки** — см. тексты ниже. Rahmat: open.rhmt.uz, 1865, @rhmt_support_bot. Uzum Nasiya: через менеджера Капиталбанка / Uzum.
-2. **Получить от Rahmat**: `application_id`, `secret`, `store_id` (ID кассы). Указать им адрес для callback (см. п. 5).
-3. **Получить от Uzum Nasiya**: Bearer-токен, ID категории товара (`category`) и тип единицы (`unit_id`).
-4. **Бухгалтер**: ИКПУ (MXIK) и код упаковки для каждого товара (tasnif.soliq.uz), ставка НДС, если компания плательщик НДС.
-5. **Развернуть функцию** (Supabase CLI):
+| Вопрос менеджера | Ответ |
+|---|---|
+| Сайт | https://weglow.uz |
+| Callback URL | https://pay.weglow.uz/uzum/callback |
+| IP сервера | публичный IP VPS в Ташкенте |
+| Фискализация | автофискализация через Uzum |
+| Вид чека / единица | PURCHASE (продажа) / шт |
+
+## Развёртывание
+
+1. **VPS в Ташкенте** (например, Servercore, регион Tashkent): Ubuntu 24.04, 1–2 vCPU, 2 ГБ RAM, публичный IPv4.
+   При создании добавить SSH-ключ из `~/.ssh/weglow_uz_ed25519.pub`.
+2. **DNS** в ps.kz: запись `A` для `pay.weglow.uz` → IP сервера.
+3. **Подготовка сервера** (один раз):
    ```bash
-   supabase link --project-ref <REF>
-   supabase db push                       # таблицы uz_products, uz_payments
-   supabase secrets set \
-     MULTICARD_APP_ID=... MULTICARD_SECRET=... MULTICARD_STORE_ID=... \
-     NASIYA_TOKEN=... \
-     ADMIN_KEY=<длинный пароль для менеджеров> \
-     PUBLIC_FN_URL=https://<REF>.supabase.co/functions/v1/pay \
-     SITE_URL=https://weglow.uz \
-     CORS_ORIGINS=https://weglow.uz,https://www.weglow.uz \
-     TG_BOT_TOKEN=... TG_CHAT_ID=...
-   supabase functions deploy pay
+   ssh -i ~/.ssh/weglow_uz_ed25519 root@<IP> 'bash -s' < deploy/setup-server.sh
    ```
-   Callback для Rahmat: `https://<REF>.supabase.co/functions/v1/pay/multicard/callback`.
-   Для теста можно временно задать `MULTICARD_BASE_URL=https://dev-mesh.multicard.uz` (песочница).
-6. **Цены и коды товаров** — в таблице `uz_products` (Supabase → Table editor): `price_uzs`, `mxik`, `package_code`, `vat_percent`, `nasiya_category`, `nasiya_unit_id`. Товар без цены онлайн не продаётся.
-7. **Включить на сайте**: в `assets/js/config.js` указать `payApi: 'https://<REF>.supabase.co/functions/v1/pay'` и выложить.
+4. **Секреты**: заполнить `deploy/.env.example` и положить на сервер как `/opt/weglow/deploy/.env`.
+5. **Выкладка** (и каждое обновление):
+   ```bash
+   deploy/deploy.sh root@<IP>
+   ```
+   Caddy сам получит HTTPS-сертификат для pay.weglow.uz. Проверка: `https://pay.weglow.uz/health`.
+6. Передать Uzum IP сервера. Заполнить товары на странице менеджера.
+7. **Включить на сайте**: `payApi: 'https://pay.weglow.uz'` в `assets/js/config.js` и выложить.
 
-## Важно
+Резервная копия базы — каждую ночь в `/opt/weglow/data/backups` (30 дней).
 
-- Callback Multicard должен отвечать `{"success": true}`, иначе платёж отменяется. Функция проверяет подпись `md5(store_id + invoice_id + amount + secret)` и сумму заказа.
+## Тест
+
+- Тестовые карты Uzum: HUMO `9860 0901 0121 9724`, Uzcard `8600 3129 2957 7175`, код 3-DS `777777`.
 - У Uzum Nasiya нет тестовой среды — первый договор проверять на небольшой сумме вместе с менеджером Uzum.
-- В Nasiya метод проверки статуса принимает номер договора, а подтверждение и отмена — внутренний `order`. Если менеджер Uzum скажет иначе — поправить `nasiya/confirm` в `supabase/functions/pay/index.ts`.
+- В Nasiya проверка статуса принимает номер договора, а подтверждение и отмена — внутренний `order`. Если менеджер Uzum скажет иначе — поправить `/nasiya/confirm` в `server/app.ts`.
 
-## Текст заявки в Rahmat (Multicard)
+## Заявка в Uzum Nasiya
 
-> Здравствуйте! Хотим подключить онлайн-эквайринг Rahmat для интернет-магазина https://weglow.uz (морской коллаген WEGLOW).
-> Компания: <название юрлица>, ИНН <ИНН>, расчётный счёт в АКБ «Капиталбанк».
-> Нужно: оплата на платёжной странице Multicard (инвойсы через API) — карты Uzcard, Humo, Visa, Mastercard, Payme, Click, Uzum и другие приложения; отправка ссылки на оплату по SMS; фискализация чеков на вашей стороне.
-> Вопросы: 1) комиссия по каждому способу оплаты; 2) срок зачисления на счёт; 3) какой партнёр стоит за кнопкой «Оплатить в рассрочку» на вашей платёжной странице; 4) можно ли выставлять счета из личного кабинета без API; 5) список документов для договора.
-> Контакт: <имя, телефон, Telegram>.
-
-## Текст заявки в Uzum Nasiya
-
-> Здравствуйте! Хотим подключить рассрочку Uzum Nasiya для интернет-магазина https://weglow.uz (морской коллаген WEGLOW). Расчётный счёт — в АКБ «Капиталбанк».
+> Здравствуйте! Хотим подключить рассрочку Uzum Nasiya для интернет-магазина https://weglow.uz (морской коллаген WEGLOW, «Красота и здоровье»). Расчётный счёт — АКБ «Капиталбанк».
 > Компания: <название юрлица>, ИНН <ИНН>.
-> Интеграция: Uzum Nasiya Partner API (check-status, calculate, orders, confirm, cancel) — уже готова на нашей стороне.
-> Просим: 1) условия и комиссию для партнёра; 2) доступные сроки рассрочки; 3) Bearer-токен для API; 4) ID категории товара и тип единицы для нашего товара (биологически активная добавка, упаковка 30 саше); 5) срок зачисления средств.
-> Контакт: <имя, телефон, Telegram>.
+> Интеграция через Uzum Nasiya Partner API уже готова на нашей стороне.
+> Просим: условия и комиссию, сроки рассрочки, срок зачисления, список документов, Bearer-токен API, ID категории товара и тип единицы (упаковка 30 саше).

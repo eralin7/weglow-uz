@@ -1,0 +1,5 @@
+# HTTPS certificate for pay.weglow.uz is issued automatically (Let's Encrypt).
+pay.weglow.uz {
+	encode gzip
+	reverse_proxy pay:8080
+}

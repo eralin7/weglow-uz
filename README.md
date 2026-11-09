@@ -11,7 +11,8 @@
 - `assets/js/main.js` — переключение языка, окна, формы → WhatsApp
 - `assets/js/pay.js` — онлайн-оплата и рассрочка (включается через `payApi`)
 - `manager/` — страница «Счета для клиентов» для менеджеров
-- `supabase/` — платёжный сервер (Edge Function `pay`) и таблицы, см. `docs/PAYMENTS.md`
+- `server/` — платёжный сервер (Deno + SQLite): Uzum Checkout и Uzum Nasiya
+- `deploy/` — Docker Compose, Caddy, скрипты установки и выкладки на VPS в Ташкенте; см. `docs/PAYMENTS.md`
 - `assets/css/style.css` — стили
 - `CNAME` — домен для GitHub Pages
 
@@ -20,7 +21,7 @@
 Instagram — ссылка в `index.html` (поиск по `instagram.com`).
 
 ## Цены и оплата
-Цены в сумах хранятся в таблице `uz_products` платёжного сервера и показываются на сайте, когда онлайн-оплата включена. Подключение — `docs/PAYMENTS.md`.
+Цены в сумах, ИКПУ и коды упаковки задаются на странице менеджера (раздел «Товары и цены») и показываются на сайте, когда онлайн-оплата включена. Подключение — `docs/PAYMENTS.md`.
 
 ## Локальный просмотр
 ```
