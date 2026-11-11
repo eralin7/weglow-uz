@@ -2,6 +2,9 @@
 # One-time setup of a fresh Ubuntu 24.04 VPS for the weglow.uz payment server. Run as root.
 set -euo pipefail
 
+# Some provider images keep the installer's cdrom source, which breaks apt-get update.
+sed -i '/cdrom/s/^\s*deb /# deb /' /etc/apt/sources.list 2>/dev/null || true
+
 apt-get update
 apt-get install -y ca-certificates curl sqlite3 ufw rsync
 
@@ -13,6 +16,7 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
   > /etc/apt/sources.list.d/docker.list
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+systemctl enable --now containerd docker.socket docker
 
 # Firewall: SSH and web only
 ufw allow OpenSSH

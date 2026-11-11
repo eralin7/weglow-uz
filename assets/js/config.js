@@ -5,5 +5,5 @@ window.WEGLOW_CONFIG = {
   phoneText: '+7 708 901 80 88',
   // Payment server in Tashkent (see server/ and docs/PAYMENTS.md), e.g. https://pay.weglow.uz
   // Empty = online payment is off and orders go to WhatsApp.
-  payApi: ''
+  payApi: 'https://pay.weglow.uz'
 };
